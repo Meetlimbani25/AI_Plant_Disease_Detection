@@ -1,0 +1,67 @@
+.navbar {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+}
+.navbar-inner {
+  max-width: 1200px; margin: 0 auto;
+  padding: 0 24px; height: 68px;
+  display: flex; align-items: center; gap: 32px;
+}
+.navbar-logo {
+  display: flex; align-items: center; gap: 10px;
+  text-decoration: none; flex-shrink: 0;
+}
+.logo-leaf { font-size: 1.6rem; }
+.logo-text {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.3rem; font-weight: 700;
+  color: var(--green-deep);
+}
+.logo-text span { color: var(--green-bright); }
+
+.navbar-links {
+  display: flex; align-items: center; gap: 8px;
+  margin-left: auto; flex-wrap: nowrap;
+}
+.navbar-links a:not(.btn) {
+  padding: 6px 14px; border-radius: var(--radius-sm);
+  font-size: 0.9rem; font-weight: 500; color: var(--text-mid);
+  text-decoration: none; transition: var(--transition);
+}
+.navbar-links a:not(.btn):hover { color: var(--green-mid); background: var(--green-pale); }
+.navbar-links a.active { color: var(--green-mid); background: var(--green-pale); }
+
+.navbar-user { display: flex; align-items: center; gap: 10px; margin-left: 8px; }
+.user-avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--green-mid); color: white !important;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 0.9rem;
+  text-decoration: none;
+}
+
+.hamburger {
+  display: none; flex-direction: column; gap: 5px;
+  background: none; border: none; cursor: pointer; padding: 8px; margin-left: auto;
+}
+.hamburger span {
+  display: block; width: 24px; height: 2px;
+  background: var(--green-mid); border-radius: 2px; transition: var(--transition);
+}
+
+@media (max-width: 768px) {
+  .hamburger { display: flex; }
+  .navbar-links {
+    display: none; position: fixed; top: 68px; left: 0; right: 0;
+    background: white; flex-direction: column; align-items: stretch;
+    padding: 16px; gap: 4px;
+    border-bottom: 1px solid var(--border);
+    box-shadow: var(--shadow-md);
+  }
+  .navbar-links.open { display: flex; }
+  .navbar-links a:not(.btn) { padding: 12px 16px; }
+  .navbar-user { flex-direction: row; justify-content: space-between; padding: 8px 0; }
+}
