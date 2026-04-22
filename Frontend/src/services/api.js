@@ -40,8 +40,8 @@ export const updateShopkeeperProduct = (id, data) => API.put(`/shopkeeper/produc
 export const deleteShopkeeperProduct = (id) => API.delete(`/shopkeeper/products/${id}`);
 export const getShopkeeperIncomingOrders = (params) => API.get('/shopkeeper/orders', { params });
 export const updateShopkeeperOrderStatus = (id, status) => API.put(`/shopkeeper/orders/${id}/status`, { status });
-
 export const updateShopkeeperUpi = (data) => API.put('/shopkeeper/update-upi', data);
+export const updateShopkeeperInvoiceSettings = (data) => API.put('/shopkeeper/invoice-settings', data);
 
 // Cart
 export const getCart = () => API.get('/cart');

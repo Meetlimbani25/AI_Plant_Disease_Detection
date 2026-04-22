@@ -1,28 +1,30 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from 'react-i18next';
 import './Home.css';
-
-const features = [
-  { icon: '🌾', title: 'Crop Intelligence', desc: 'Season-wise crop guides with weekly care schedules tailored for your soil and region.' },
-  { icon: '🔬', title: 'AI Disease Detection', desc: 'Upload a photo of your crop and get instant AI-powered disease diagnosis with remedies.' },
-  { icon: '🛒', title: 'Agri Shop', desc: 'Buy seeds, fertilizers, and medicines directly from verified shopkeepers and admin stock.' },
-  { icon: '📦', title: 'Easy Ordering', desc: 'Hassle-free cart and order management with delivery tracking for all your agri needs.' },
-  { icon: '🌿', title: 'Shopkeeper Portal', desc: 'Shopkeepers can list products, manage inventory, and serve local farmers efficiently.' },
-  { icon: '💧', title: 'Water Planning', desc: 'Water-level based crop recommendations so you plan irrigation and input usage wisely.' },
-];
-
-const crops = [
-  { emoji: '🌾', name: 'Wheat', season: 'Winter' },
-  { emoji: '🌽', name: 'Maize', season: 'Monsoon' },
-  { emoji: '🍅', name: 'Tomato', season: 'All Season' },
-  { emoji: '🧅', name: 'Onion', season: 'Winter' },
-  { emoji: '🥔', name: 'Potato', season: 'Winter' },
-  { emoji: '🌻', name: 'Sunflower', season: 'Monsoon' },
-];
 
 export default function Home() {
   const { user } = useAuth();
+  const { t, i18n } = useTranslation();
+
+  const features = [
+    { icon: '🌾', title: t('home.featuresTitle'), desc: t('home.featuresSubtitle') }, // Note: better to have specific feature translations, but using general for now
+    { icon: '🔬', title: 'AI Disease Detection', desc: 'Upload a photo of your crop and get instant AI-powered disease diagnosis with remedies.' },
+    { icon: '🛒', title: 'Agri Shop', desc: 'Buy seeds, fertilizers, and medicines directly from verified shopkeepers and admin stock.' },
+    { icon: '📦', title: 'Easy Ordering', desc: 'Hassle-free cart and order management with delivery tracking for all your agri needs.' },
+    { icon: '🌿', title: 'Shopkeeper Portal', desc: 'Shopkeepers can list products, manage inventory, and serve local farmers efficiently.' },
+    { icon: '💧', title: 'Water Planning', desc: 'Water-level based crop recommendations so you plan irrigation and input usage wisely.' },
+  ];
+
+  const crops = [
+    { emoji: '🌾', name: 'Wheat', season: 'Winter' },
+    { emoji: '🌽', name: 'Maize', season: 'Monsoon' },
+    { emoji: '🍅', name: 'Tomato', season: 'All Season' },
+    { emoji: '🧅', name: 'Onion', season: 'Winter' },
+    { emoji: '🥔', name: 'Potato', season: 'Winter' },
+    { emoji: '🌻', name: 'Sunflower', season: 'Monsoon' },
+  ];
 
   return (
     <div className="home page-enter">
@@ -35,30 +37,33 @@ export default function Home() {
       <section className="hero">
         <div className="container hero-inner">
           <div className="hero-content">
-            <span className="hero-badge">🌱 Smart Farming Platform</span>
+            <span className="hero-badge">{t('home.heroBadge')}</span>
             <h1 className="hero-title">
-              Grow Smarter,<br/>
-              <span>Farm Better</span>
+              {t('home.heroTitle1')}<br/>
+              <span>{t('home.heroTitle2')}</span>
             </h1>
             <p className="hero-desc">
-              AgriPharma connects farmers with AI-powered tools, quality agri-inputs, and expert crop knowledge — all in one platform built for Indian agriculture.
+              {t('home.heroDesc')}
             </p>
+
+
+
             <div className="hero-actions">
               {user ? (
-                <Link to="/dashboard" className="btn btn-primary btn-lg">Go to Dashboard →</Link>
+                <Link to="/dashboard" className="btn btn-primary btn-lg">{t('home.goToDashboard')}</Link>
               ) : (
                 <>
-                  <Link to="/register" className="btn btn-primary btn-lg">Start for Free →</Link>
-                  <Link to="/crops" className="btn btn-outline btn-lg">Explore Crops</Link>
+                  <Link to="/register" className="btn btn-primary btn-lg">{t('home.startForFree')}</Link>
+                  <Link to="/crops" className="btn btn-outline btn-lg">{t('home.exploreCrops')}</Link>
                 </>
               )}
             </div>
             <div className="hero-stats">
-              <div className="stat"><strong>50+</strong><span>Crops</span></div>
+              <div className="stat"><strong>50+</strong><span>{t('home.stats.crops')}</span></div>
               <div className="stat-divider" />
-              <div className="stat"><strong>AI</strong><span>Disease Detection</span></div>
+              <div className="stat"><strong>AI</strong><span>{t('home.stats.disease')}</span></div>
               <div className="stat-divider" />
-              <div className="stat"><strong>100%</strong><span>Verified Sellers</span></div>
+              <div className="stat"><strong>100%</strong><span>{t('home.stats.sellers')}</span></div>
             </div>
           </div>
           <div className="hero-visual">
@@ -93,7 +98,7 @@ export default function Home() {
       {/* Popular Crops Strip */}
       <section className="crops-strip">
         <div className="container">
-          <p className="strip-label">Popular Crops on AgriPharma</p>
+          <p className="strip-label">{t('home.popularCrops')}</p>
           <div className="crops-row">
             {crops.map(c => (
               <Link to={`/crops?season=${c.season}`} key={c.name} className="crop-pill">
@@ -110,8 +115,8 @@ export default function Home() {
       <section className="features-section">
         <div className="container">
           <div className="section-header">
-            <h2 className="section-title">Everything a Farmer Needs</h2>
-            <p className="section-subtitle">One platform, complete agricultural support from sowing to selling.</p>
+            <h2 className="section-title">{t('home.featuresTitle')}</h2>
+            <p className="section-subtitle">{t('home.featuresSubtitle')}</p>
           </div>
           <div className="features-grid">
             {features.map((f, i) => (
@@ -124,6 +129,7 @@ export default function Home() {
           </div>
         </div>
       </section>
+...
 
       {/* CTA Section */}
       <section className="cta-section">

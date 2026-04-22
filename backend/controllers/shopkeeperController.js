@@ -4,7 +4,7 @@ const db = require('../config/db');
 const getProfile = async (req, res) => {
   try {
     const [rows] = await db.query(
-      'SELECT id, name, shop_name, mobile, email, address, city, district, pincode, gst_number, shop_image, is_approved, upi_id, upi_name, created_at FROM shopkeepers WHERE id = ?',
+      'SELECT id, name, shop_name, mobile, email, address, city, district, pincode, gst_number, shop_image, is_approved, upi_id, upi_name, bank_name, bank_account_number, bank_ifsc, invoice_terms, created_at FROM shopkeepers WHERE id = ?',
       [req.shopkeeper.id]
     );
     res.json({ success: true, shopkeeper: rows[0] });
@@ -16,7 +16,7 @@ const getProfile = async (req, res) => {
 // ADD product
 const addProduct = async (req, res) => {
   try {
-    const { seed_id, name, category, description, price, price_unit, quantity_value, quantity_unit, discount_price, unit, stock } = req.body;
+    const { seed_id, name, category, description, price, price_unit, quantity_value, quantity_unit, discount_price, unit, stock, hsn_sac, gst_rate } = req.body;
     const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
 
     if (!category || category.trim() === '') {
@@ -24,9 +24,9 @@ const addProduct = async (req, res) => {
     }
 
     const [result] = await db.query(
-      `INSERT INTO shopkeeper_products (shopkeeper_id, seed_id, name, category, description, price, price_unit, quantity_value, quantity_unit, discount_price, unit, stock, image_url, is_approved, is_active)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [req.shopkeeper.id, seed_id || null, name, category.trim().toLowerCase(), description, price, price_unit, quantity_value, quantity_unit, discount_price || null, unit, stock, imageUrl, 1, 1]
+      `INSERT INTO shopkeeper_products (shopkeeper_id, seed_id, name, category, description, price, price_unit, quantity_value, quantity_unit, discount_price, unit, stock, image_url, is_approved, is_active, hsn_sac, gst_rate)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [req.shopkeeper.id, seed_id || null, name, category.trim().toLowerCase(), description, price, price_unit, quantity_value, quantity_unit, discount_price || null, unit, stock, imageUrl, 1, 1, hsn_sac || null, gst_rate || 0]
     );
 
     res.status(201).json({ success: true, message: 'Product added and approved for sale.', product_id: result.insertId });
@@ -54,10 +54,10 @@ const getMyProducts = async (req, res) => {
 // UPDATE product
 const updateProduct = async (req, res) => {
   try {
-    const { name, description, price, price_unit, discount_price, stock } = req.body;
+    const { name, description, price, price_unit, discount_price, stock, hsn_sac, gst_rate } = req.body;
     await db.query(
-      'UPDATE shopkeeper_products SET name=?, description=?, price=?, price_unit=?, discount_price=?, stock=? WHERE id=? AND shopkeeper_id=?',
-      [name, description, price, price_unit, discount_price || null, stock, req.params.id, req.shopkeeper.id]
+      'UPDATE shopkeeper_products SET name=?, description=?, price=?, price_unit=?, discount_price=?, stock=?, hsn_sac=?, gst_rate=? WHERE id=? AND shopkeeper_id=?',
+      [name, description, price, price_unit, discount_price || null, stock, hsn_sac || null, gst_rate || 0, req.params.id, req.shopkeeper.id]
     );
     res.json({ success: true, message: 'Product updated!' });
   } catch (err) {
@@ -80,9 +80,11 @@ const getOrders = async (req, res) => {
   try {
     const { status } = req.query;
     let query = `
-      SELECT so.*, f.name as farmer_name, f.mobile as farmer_mobile, f.village
+      SELECT so.*, f.name as farmer_name, f.mobile as farmer_mobile, f.village as farmer_village,
+             s.shop_name, s.address as shop_address, s.city as shop_city, s.gst_number, s.bank_name, s.bank_account_number, s.bank_ifsc, s.invoice_terms
       FROM shopkeeper_orders so
       JOIN farmers f ON so.farmer_id = f.id
+      JOIN shopkeepers s ON so.shopkeeper_id = s.id
       WHERE so.shopkeeper_id = ?`;
     let params = [req.shopkeeper.id];
     if (status) { query += ' AND so.order_status = ?'; params.push(status); }
@@ -118,10 +120,19 @@ const updateOrderStatus = async (req, res) => {
       [status, req.params.id, req.shopkeeper.id]
     );
 
-    if (status === 'delivered' && oldStatus !== 'delivered') {
+    // Deduct stock if moving from pending to confirmed/shipped/delivered
+    if (oldStatus === 'pending' && ['confirmed', 'shipped', 'delivered'].includes(status)) {
       const [items] = await db.query('SELECT product_id, quantity FROM shopkeeper_order_items WHERE order_id = ?', [req.params.id]);
       for (const item of items) {
         await db.query('UPDATE shopkeeper_products SET stock = GREATEST(ifnull(stock, 0) - ?, 0) WHERE id = ?', [item.quantity, item.product_id]);
+      }
+    }
+
+    // Restore stock if a committed order is cancelled
+    if (status === 'cancelled' && ['confirmed', 'shipped', 'delivered'].includes(oldStatus)) {
+      const [items] = await db.query('SELECT product_id, quantity FROM shopkeeper_order_items WHERE order_id = ?', [req.params.id]);
+      for (const item of items) {
+        await db.query('UPDATE shopkeeper_products SET stock = stock + ? WHERE id = ?', [item.quantity, item.product_id]);
       }
     }
 
@@ -197,6 +208,20 @@ const updateUpi = async (req, res) => {
   }
 };
 
+// UPDATE invoice settings
+const updateInvoiceSettings = async (req, res) => {
+  try {
+    const { bank_name, bank_account_number, bank_ifsc, invoice_terms, gst_number } = req.body;
+    await db.query(
+      'UPDATE shopkeepers SET bank_name = ?, bank_account_number = ?, bank_ifsc = ?, invoice_terms = ?, gst_number = ? WHERE id = ?',
+      [bank_name || null, bank_account_number || null, bank_ifsc || null, invoice_terms || null, gst_number || null, req.shopkeeper.id]
+    );
+    res.json({ success: true, message: 'Invoice settings updated successfully!' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
 // GET cancelled orders for refunds
 const getCancelledOrders = async (req, res) => {
   try {
@@ -264,4 +289,4 @@ const processRefund = async (req, res) => {
 
 
 
-module.exports = { getProfile, addProduct, getMyProducts, updateProduct, deleteProduct, getOrders, updateOrderStatus, getPayments, getReviews, addReview, updateUpi, getCancelledOrders, processRefund };
+module.exports = { getProfile, addProduct, getMyProducts, updateProduct, deleteProduct, getOrders, updateOrderStatus, getPayments, getReviews, addReview, updateUpi, updateInvoiceSettings, getCancelledOrders, processRefund };

@@ -7,7 +7,7 @@ const getProducts = async (req, res) => {
     let query = 'SELECT * FROM products WHERE 1=1';
     let params = [];
     if (category) { query += ' AND category = ?'; params.push(category); }
-    if (search)   { query += ' AND name LIKE ?';  params.push(`%${search}%`); }
+    if (search) { query += ' AND name LIKE ?'; params.push(`%${search}%`); }
     query += ' ORDER BY category, name';
     const [products] = await db.query(query, params);
     res.json({ success: true, total: products.length, products });
@@ -41,8 +41,8 @@ const getSeeds = async (req, res) => {
       LEFT JOIN admin_seed_stock a ON s.id = a.seed_id AND a.is_active = 1
       WHERE 1=1`;
     let params = [];
-    if (crop_id) { query += ' AND s.crop_id = ?';    params.push(crop_id); }
-    if (search)  { query += ' AND s.variety_name LIKE ?'; params.push(`%${search}%`); }
+    if (crop_id) { query += ' AND s.crop_id = ?'; params.push(crop_id); }
+    if (search) { query += ' AND s.variety_name LIKE ?'; params.push(`%${search}%`); }
     const [seeds] = await db.query(query, params);
     res.json({ success: true, total: seeds.length, seeds });
   } catch (err) {
@@ -62,9 +62,9 @@ const getShopkeeperProducts = async (req, res) => {
       LEFT JOIN seeds sd ON sp.seed_id = sd.id
       WHERE s.is_approved = 1 AND sp.is_active = 1`;
     let params = [];
-    if (category) { query += ' AND sp.category = ?';   params.push(category); }
-    if (city)     { query += ' AND s.city LIKE ?';     params.push(`%${city}%`); }
-    if (search)   { query += ' AND sp.name LIKE ?';    params.push(`%${search}%`); }
+    if (category) { query += ' AND sp.category = ?'; params.push(category); }
+    if (city) { query += ' AND s.city LIKE ?'; params.push(`%${city}%`); }
+    if (search) { query += ' AND sp.name LIKE ?'; params.push(`%${search}%`); }
     query += ' ORDER BY sp.category, sp.name';
     const [products] = await db.query(query, params);
     res.json({ success: true, total: products.length, products });

@@ -8,8 +8,8 @@ const getCart = async (req, res) => {
     // Admin products/seeds cart
     const [adminCart] = await db.query(
       `SELECT c.*, 
-              p.name as product_name, p.image_url as product_image,
-              s.variety_name as seed_name, cr.name as crop_name
+              p.name as product_name, p.image_url as product_image, p.id as product_id,
+              s.variety_name as seed_name, cr.name as crop_name, cr.id as crop_id, a.id as seed_stock_id
        FROM cart c
        LEFT JOIN products p         ON c.product_id = p.id AND c.item_type = 'product'
        LEFT JOIN admin_seed_stock a ON c.seed_stock_id = a.id AND c.item_type = 'seed'
@@ -20,7 +20,7 @@ const getCart = async (req, res) => {
 
     // Shopkeeper cart
     const [shopCart] = await db.query(
-      `SELECT sc.*, sp.name as product_name, sp.category,
+      `SELECT sc.*, sp.name as product_name, sp.category, sp.id as product_id,
               sp.image_url, sh.shop_name, sh.city, sh.upi_id, sh.upi_name
        FROM shopkeeper_cart sc
        JOIN shopkeeper_products sp ON sc.product_id = sp.id

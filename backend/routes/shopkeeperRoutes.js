@@ -14,6 +14,7 @@ const upload = multer({ storage });
 // Shopkeeper routes (shopkeeper auth)
 router.get('/profile', protectShopkeeper, ctrl.getProfile);
 router.put('/update-upi', protectShopkeeper, ctrl.updateUpi);
+router.put('/invoice-settings', protectShopkeeper, ctrl.updateInvoiceSettings);
 router.post('/products', protectShopkeeper, upload.single('image'), ctrl.addProduct);
 router.get('/products', protectShopkeeper, ctrl.getMyProducts);
 router.put('/products/:id', protectShopkeeper, ctrl.updateProduct);

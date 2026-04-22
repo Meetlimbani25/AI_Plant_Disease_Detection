@@ -1,15 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { getCrops } from '../services/api';
 import { getCropPhoto } from '../utils/cropPhotos';
 import './Crops.css';
-
-const SEASONS = [
-  { label: 'All Seasons', value: 'All' },
-  { label: '🌧️ Kharif (Monsoon)', value: 'monsoon' },
-  { label: '❄️ Rabi (Winter)', value: 'winter' },
-  { label: '☀️ Zaid (Summer)', value: 'summer' },
-];
 
 const cropEmojis = {
   cotton: '🌸', kapas: '🌸',
@@ -66,16 +60,8 @@ const getEmoji = (name) => {
 
 const seasonColors = {
   Monsoon: { bg: 'linear-gradient(135deg,#e3f2fd,#bbdefb)', badge: '#1565c0' },
-  Winter:  { bg: 'linear-gradient(135deg,#e8f5e9,#c8e6c9)', badge: '#2e7d32' },
-  Summer:  { bg: 'linear-gradient(135deg,#fff8e1,#ffecb3)', badge: '#f57f17' },
-};
-
-const getSeasonLabel = (s) => {
-  const lower = (s || '').toLowerCase();
-  if (lower === 'monsoon') return 'Kharif · Monsoon';
-  if (lower === 'winter')  return 'Rabi · Winter';
-  if (lower === 'summer')  return 'Zaid · Summer';
-  return s;
+  Winter: { bg: 'linear-gradient(135deg,#e8f5e9,#c8e6c9)', badge: '#2e7d32' },
+  Summer: { bg: 'linear-gradient(135deg,#fff8e1,#ffecb3)', badge: '#f57f17' },
 };
 
 const getSeasonCfg = (s) => {
@@ -84,9 +70,26 @@ const getSeasonCfg = (s) => {
 };
 
 export default function Crops() {
-  const [crops, setCrops]     = useState([]);
+  const { t } = useTranslation();
+
+  const SEASONS = [
+    { label: t('crops.labels.allSeasons'), value: 'All' },
+    { label: t('crops.labels.monsoon'), value: 'monsoon' },
+    { label: t('crops.labels.winter'), value: 'winter' },
+    { label: t('crops.labels.summer'), value: 'summer' },
+  ];
+
+  const getSeasonLabel = (s) => {
+    const lower = (s || '').toLowerCase();
+    if (lower === 'monsoon') return t('crops.stats.monsoon');
+    if (lower === 'winter') return t('crops.stats.winter');
+    if (lower === 'summer') return t('crops.stats.summer');
+    return s;
+  };
+
+  const [crops, setCrops] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch]   = useState('');
+  const [search, setSearch] = useState('');
   const [searchParams, setSearchParams] = useSearchParams();
   const season = searchParams.get('season') || 'All';
 
@@ -110,10 +113,10 @@ export default function Crops() {
 
   const grouped = season === 'All'
     ? ['Monsoon', 'Winter', 'Summer'].reduce((acc, s) => {
-        const list = filtered.filter(c => (c.season || '').toLowerCase() === s.toLowerCase());
-        if (list.length) acc[s] = list;
-        return acc;
-      }, {})
+      const list = filtered.filter(c => (c.season || '').toLowerCase() === s.toLowerCase());
+      if (list.length) acc[s] = list;
+      return acc;
+    }, {})
     : null;
 
   return (
@@ -122,14 +125,14 @@ export default function Crops() {
         {/* Header */}
         <div className="page-header">
           <div>
-            <h1 className="section-title">Gujarat Crop Knowledge Hub</h1>
+            <h1 className="section-title">{t('crops.hubTitle')}</h1>
             <p className="section-subtitle">
-              Complete crop scheduling for all seasons grown in Gujarat — Kharif, Rabi &amp; Zaid
+              {t('crops.hubSubtitle')}
             </p>
           </div>
           {!loading && (
             <div className="crop-count-badge">
-              <span>{filtered.length}</span> Crops
+              <span>{filtered.length}</span> {t('home.stats.crops')}
             </div>
           )}
         </div>
@@ -139,22 +142,22 @@ export default function Crops() {
           <div className="season-stat monsoon">
             <span className="ss-icon">🌧️</span>
             <div>
-              <div className="ss-label">Kharif (Monsoon)</div>
-              <div className="ss-sub">June – October</div>
+              <div className="ss-label">{t('crops.stats.monsoon')}</div>
+              <div className="ss-sub">{t('crops.stats.monsoonMonths')}</div>
             </div>
           </div>
           <div className="season-stat winter">
             <span className="ss-icon">❄️</span>
             <div>
-              <div className="ss-label">Rabi (Winter)</div>
-              <div className="ss-sub">October – March</div>
+              <div className="ss-label">{t('crops.stats.winter')}</div>
+              <div className="ss-sub">{t('crops.stats.winterMonths')}</div>
             </div>
           </div>
           <div className="season-stat summer">
             <span className="ss-icon">☀️</span>
             <div>
-              <div className="ss-label">Zaid (Summer)</div>
-              <div className="ss-sub">March – June</div>
+              <div className="ss-label">{t('crops.stats.summer')}</div>
+              <div className="ss-sub">{t('crops.stats.summerMonths')}</div>
             </div>
           </div>
         </div>
@@ -174,7 +177,7 @@ export default function Crops() {
           </div>
           <input
             className="search-input" type="text"
-            placeholder="🔍 Search crops by name..."
+            placeholder={t('crops.searchPlaceholder')}
             value={search} onChange={e => setSearch(e.target.value)}
           />
         </div>
@@ -185,8 +188,8 @@ export default function Crops() {
         ) : filtered.length === 0 ? (
           <div className="empty-state">
             <div className="empty-emoji">🌱</div>
-            <h3>No crops found</h3>
-            <p>Try changing the season filter or search term.</p>
+            <h3>{t('crops.noCropsFound')}</h3>
+            <p>{t('crops.tryChangingFilter')}</p>
           </div>
         ) : season === 'All' && grouped ? (
           // Grouped view when All is selected
@@ -220,6 +223,11 @@ export default function Crops() {
 }
 
 function CropCard({ crop, cfg }) {
+  const { t } = useTranslation();
+
+  // Try to find translated name, fallback to original
+  const displayName = t(`cropsList.${crop.name.toLowerCase()}`, { defaultValue: crop.name });
+
   return (
     <Link to={`/crops/${crop.id}`} className="crop-card">
       <div className="crop-card-image-wrapper">
@@ -227,29 +235,23 @@ function CropCard({ crop, cfg }) {
         <div className="crop-card-emoji-overlay">{getEmoji(crop.name)}</div>
       </div>
       <div className="crop-card-body">
-        <h3>{crop.name}</h3>
+        <h3>{displayName}</h3>
         <div className="crop-meta">
           <span
             className="badge-season"
             style={{ background: cfg.badge || 'var(--green-mid)', color: '#fff' }}
           >
-            {crop.season === 'monsoon' ? 'Kharif' : crop.season === 'winter' ? 'Rabi' : 'Zaid'} · {crop.season}
+            {crop.season === 'monsoon' ? t('crops.stats.monsoon') : crop.season === 'winter' ? t('crops.stats.winter') : t('crops.stats.summer')}
           </span>
           {crop.duration_days && (
-            <span className="crop-duration">⏱ {crop.duration_days} days</span>
+            <span className="crop-duration">⏱ {crop.duration_days} {t('crops.days')}</span>
           )}
         </div>
         {crop.description && (
           <p className="crop-desc">{crop.description.slice(0, 95)}{crop.description.length > 95 ? '…' : ''}</p>
         )}
-        {crop.soil_type && (
-          <div className="crop-soil">🪱 {crop.soil_type.split('/')[0].trim()}</div>
-        )}
-        {crop.water_requirement && (
-          <div className="crop-water">💧 {crop.water_requirement}</div>
-        )}
         <div className="crop-card-footer">
-          <span className="view-detail">View Full Schedule →</span>
+          <span className="view-detail">{t('crops.viewFullSchedule')}</span>
         </div>
       </div>
     </Link>

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { getMyShopkeeperProducts, addShopkeeperProduct, updateShopkeeperProduct, deleteShopkeeperProduct, getShopkeeperIncomingOrders, updateShopkeeperOrderStatus } from '../services/api';
+import { generateInvoice } from '../utils/generateInvoice';
 import './Shopkeeper.css';
 
 export default function Shopkeeper() {
@@ -29,6 +30,10 @@ export default function Shopkeeper() {
   const [upiForm, setUpiForm] = useState({ upi_id: '', upi_name: '' });
   const [upiMsg, setUpiMsg] = useState({ type: '', text: '' });
 
+  // Invoice Form
+  const [invoiceForm, setInvoiceForm] = useState({ bank_name: '', bank_account_number: '', bank_ifsc: '', invoice_terms: '', gst_number: '' });
+  const [invoiceMsg, setInvoiceMsg] = useState({ type: '', text: '' });
+
   useEffect(() => {
     fetchProducts();
     fetchOrders();
@@ -39,6 +44,13 @@ export default function Shopkeeper() {
             setUpiForm({
               upi_id: res.data.shopkeeper.upi_id || '',
               upi_name: res.data.shopkeeper.upi_name || ''
+            });
+            setInvoiceForm({
+              bank_name: res.data.shopkeeper.bank_name || '',
+              bank_account_number: res.data.shopkeeper.bank_account_number || '',
+              bank_ifsc: res.data.shopkeeper.bank_ifsc || '',
+              invoice_terms: res.data.shopkeeper.invoice_terms || '',
+              gst_number: res.data.shopkeeper.gst_number || ''
             });
           }
         });
@@ -107,6 +119,8 @@ export default function Shopkeeper() {
           stock: form.stock || '0',
           description: form.description,
           discount_price: form.discount_price || null,
+          hsn_sac: form.hsn_sac || null,
+          gst_rate: form.gst_rate || 0
         });
         setSuccess('Product updated successfully.');
       } else {
@@ -118,6 +132,8 @@ export default function Shopkeeper() {
         data.append('price_unit', form.price_unit);
         data.append('stock', form.stock || '0');
         data.append('description', form.description);
+        if (form.hsn_sac) data.append('hsn_sac', form.hsn_sac);
+        if (form.gst_rate) data.append('gst_rate', form.gst_rate);
         if (form.discount_price) data.append('discount_price', form.discount_price);
         if (form.image) data.append('image', form.image);
 
@@ -125,7 +141,7 @@ export default function Shopkeeper() {
         setSuccess('Product added successfully!');
       }
 
-      setForm({ name: '', category: '', price: '', price_unit: 'kg', stock: '', description: '', image: null });
+      setForm({ name: '', category: '', price: '', price_unit: 'kg', stock: '', description: '', image: null, discount_price: '', hsn_sac: '', gst_rate: '' });
       setEditingProductId(null);
       fetchProducts();
     } catch (e) {
@@ -142,7 +158,7 @@ export default function Shopkeeper() {
       setSuccess('Product deleted.');
       if (editingProductId === id) {
         setEditingProductId(null);
-        setForm({ name: '', category: '', price: '', price_unit: 'kg', stock: '', description: '', image: null });
+        setForm({ name: '', category: '', price: '', price_unit: 'kg', stock: '', description: '', image: null, discount_price: '', hsn_sac: '', gst_rate: '' });
       }
       fetchProducts();
     } catch (e) {
@@ -161,6 +177,8 @@ export default function Shopkeeper() {
       description: product.description || '',
       image: null,
       discount_price: product.discount_price || '',
+      hsn_sac: product.hsn_sac || '',
+      gst_rate: product.gst_rate || ''
     });
     setError('');
     setSuccess('');
@@ -168,7 +186,7 @@ export default function Shopkeeper() {
 
   const cancelEdit = () => {
     setEditingProductId(null);
-    setForm({ name: '', category: '', price: '', price_unit: 'kg', stock: '', description: '', image: null });
+    setForm({ name: '', category: '', price: '', price_unit: 'kg', stock: '', description: '', image: null, discount_price: '', hsn_sac: '', gst_rate: '' });
     setError('');
     setSuccess('');
   };
@@ -182,6 +200,18 @@ export default function Shopkeeper() {
       setUpiMsg({ type: 'success', text: 'UPI Settings updated successfully. Farmers can now scan and pay you directly!' });
     } catch (e) {
       setUpiMsg({ type: 'error', text: e.response?.data?.message || 'Failed to update UPI settings' });
+    }
+  };
+
+  const handleInvoiceSave = async (e) => {
+    e.preventDefault();
+    setInvoiceMsg({ type: '', text: '' });
+    try {
+      const { updateShopkeeperInvoiceSettings } = require('../services/api');
+      await updateShopkeeperInvoiceSettings(invoiceForm);
+      setInvoiceMsg({ type: 'success', text: 'Invoice settings updated successfully!' });
+    } catch (e) {
+      setInvoiceMsg({ type: 'error', text: e.response?.data?.message || 'Failed to update invoice settings' });
     }
   };
 
@@ -252,7 +282,7 @@ export default function Shopkeeper() {
                 className={`btn ${activeTab === 'settings' ? 'btn-primary' : 'btn-outline'}`}
                 onClick={() => setActiveTab('settings')}
               >
-                UPI Settings
+                Settings (UPI & Invoice)
               </button>
 
             </div>
@@ -314,6 +344,26 @@ export default function Shopkeeper() {
                         min="0"
                         value={form.stock}
                         onChange={(e) => handleChange('stock', e.target.value)}
+                      />
+                    </label>
+
+                    <label>
+                      HSN/SAC Code
+                      <input
+                        type="text"
+                        value={form.hsn_sac || ''}
+                        onChange={(e) => handleChange('hsn_sac', e.target.value)}
+                      />
+                    </label>
+
+                    <label>
+                      GST Rate (%)
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={form.gst_rate || ''}
+                        onChange={(e) => handleChange('gst_rate', e.target.value)}
                       />
                     </label>
 
@@ -456,6 +506,13 @@ export default function Shopkeeper() {
                             <option value="delivered">Delivered</option>
                             <option value="cancelled">Cancelled</option>
                           </select>
+                          <button
+                            className="btn btn-outline btn-sm"
+                            style={{ marginLeft: '10px', padding: '6px 12px' }}
+                            onClick={() => generateInvoice(o)}
+                          >
+                            Download Invoice 📄
+                          </button>
                         </div>
                       </div>
                     ))}
@@ -499,6 +556,70 @@ export default function Shopkeeper() {
                   <div className="form-actions" style={{ marginTop: 20 }}>
                     <button className="btn btn-primary" type="submit">
                       Save UPI Settings
+                    </button>
+                  </div>
+                </form>
+
+                <h3 style={{ marginTop: 40 }}>Invoice Settings</h3>
+                <div className="alert alert-info" style={{ marginBottom: 20 }}>
+                  📝 These details will be printed on the invoices downloaded by farmers.
+                </div>
+
+                {invoiceMsg.text && (
+                  <div className={`alert ${invoiceMsg.type === 'success' ? 'alert-success' : 'alert-error'}`} style={{ marginBottom: 20 }}>
+                    {invoiceMsg.text}
+                  </div>
+                )}
+
+                <form className="shopkeeper-product-form" onSubmit={handleInvoiceSave} style={{ maxWidth: 600 }}>
+                  <div className="form-grid">
+                    <label>
+                      GSTIN Number
+                      <input
+                        type="text"
+                        value={invoiceForm.gst_number}
+                        onChange={(e) => setInvoiceForm(p => ({ ...p, gst_number: e.target.value }))}
+                        placeholder="e.g. 24AA..."
+                      />
+                    </label>
+                    <label>
+                      Bank Name
+                      <input
+                        type="text"
+                        value={invoiceForm.bank_name}
+                        onChange={(e) => setInvoiceForm(p => ({ ...p, bank_name: e.target.value }))}
+                        placeholder="e.g. HDFC Bank Ltd"
+                      />
+                    </label>
+                    <label>
+                      Bank Account Number
+                      <input
+                        type="text"
+                        value={invoiceForm.bank_account_number}
+                        onChange={(e) => setInvoiceForm(p => ({ ...p, bank_account_number: e.target.value }))}
+                      />
+                    </label>
+                    <label>
+                      Bank IFSC Code
+                      <input
+                        type="text"
+                        value={invoiceForm.bank_ifsc}
+                        onChange={(e) => setInvoiceForm(p => ({ ...p, bank_ifsc: e.target.value }))}
+                      />
+                    </label>
+                    <label className="full-width">
+                      Terms & Conditions (One per line)
+                      <textarea
+                        rows="4"
+                        value={invoiceForm.invoice_terms}
+                        onChange={(e) => setInvoiceForm(p => ({ ...p, invoice_terms: e.target.value }))}
+                        placeholder="1. Goods once sold will not be taken back.&#10;2. Subject to local jurisdiction only."
+                      />
+                    </label>
+                  </div>
+                  <div className="form-actions" style={{ marginTop: 20 }}>
+                    <button className="btn btn-primary" type="submit">
+                      Save Invoice Settings
                     </button>
                   </div>
                 </form>

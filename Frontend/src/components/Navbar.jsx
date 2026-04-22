@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from 'react-i18next';
 import './Navbar.css';
 
 export default function Navbar() {
   const { user, role, logout } = useAuth();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -12,6 +14,10 @@ export default function Navbar() {
   const handleLogout = () => { logout(); navigate('/'); };
 
   const isActive = (path) => location.pathname === path || location.pathname.startsWith(path + '/');
+
+  const changeLanguage = (lng) => {
+    i18n.changeLanguage(lng);
+  };
 
   return (
     <nav className="navbar">
@@ -24,35 +30,51 @@ export default function Navbar() {
         <div className={`navbar-links ${menuOpen ? 'open' : ''}`}>
           {user ? (
             <>
-              <Link to="/dashboard" className={isActive('/dashboard') ? 'active' : ''} onClick={() => setMenuOpen(false)}>Dashboard</Link>
-              <Link to="/crops" className={isActive('/crops') ? 'active' : ''} onClick={() => setMenuOpen(false)}>Crops</Link>
-              <Link to="/shop" className={isActive('/shop') ? 'active' : ''} onClick={() => setMenuOpen(false)}>Shop</Link>
+              <Link to="/dashboard" className={isActive('/dashboard') ? 'active' : ''} onClick={() => setMenuOpen(false)}>{t('common.dashboard')}</Link>
+              <Link to="/crops" className={isActive('/crops') ? 'active' : ''} onClick={() => setMenuOpen(false)}>{t('common.crops')}</Link>
+              <Link to="/shop" className={isActive('/shop') ? 'active' : ''} onClick={() => setMenuOpen(false)}>{t('common.shop')}</Link>
               {role === 'farmer' && (
                 <>
-                  <Link to="/disease" className={isActive('/disease') ? 'active' : ''} onClick={() => setMenuOpen(false)}>Disease AI</Link>
-                  <Link to="/cart" className={isActive('/cart') ? 'active' : ''} onClick={() => setMenuOpen(false)}>🛒 Cart</Link>
-                  <Link to="/orders" className={isActive('/orders') ? 'active' : ''} onClick={() => setMenuOpen(false)}>Orders</Link>
+                  <Link to="/disease" className={isActive('/disease') ? 'active' : ''} onClick={() => setMenuOpen(false)}>{t('common.diseaseAI')}</Link>
+                  <Link to="/cart" className={isActive('/cart') ? 'active' : ''} onClick={() => setMenuOpen(false)}>🛒 {t('common.cart')}</Link>
+                  <Link to="/orders" className={isActive('/orders') ? 'active' : ''} onClick={() => setMenuOpen(false)}>{t('common.orders')}</Link>
                 </>
               )}
               {role === 'shopkeeper' && (
-                <Link to="/shopkeeper" className={isActive('/shopkeeper') ? 'active' : ''} onClick={() => setMenuOpen(false)}>My Shop</Link>
+                <Link to="/shopkeeper" className={isActive('/shopkeeper') ? 'active' : ''} onClick={() => setMenuOpen(false)}>{t('common.myShop')}</Link>
               )}
               {role === 'admin' && (
-                <Link to="/admin" className={isActive('/admin') ? 'active' : ''} onClick={() => setMenuOpen(false)}>Admin Panel</Link>
+                <Link to="/admin" className={isActive('/admin') ? 'active' : ''} onClick={() => setMenuOpen(false)}>{t('common.adminPanel')}</Link>
               )}
-              <div className="navbar-user">
-                <Link to="/profile" className="user-avatar" onClick={() => setMenuOpen(false)}>
-                  {user.name?.charAt(0).toUpperCase()}
-                </Link>
-                <button onClick={handleLogout} className="btn btn-outline btn-sm">Logout</button>
+              
+              <div className="nav-auth-wrapper">
+                <div className="lang-selector-nav">
+                  <button onClick={() => changeLanguage('en')} className={`lang-btn ${i18n.language === 'en' ? 'active' : ''}`}>EN</button>
+                  <button onClick={() => changeLanguage('gj')} className={`lang-btn ${i18n.language === 'gj' ? 'active' : ''}`}>ગુજ</button>
+                </div>
+                <div className="navbar-user">
+                  <Link to="/profile" className="user-avatar" onClick={() => setMenuOpen(false)}>
+                    {user.name?.charAt(0).toUpperCase()}
+                  </Link>
+                  <button onClick={handleLogout} className="btn btn-outline btn-sm">{t('common.logout')}</button>
+                </div>
               </div>
             </>
           ) : (
             <>
-              <Link to="/crops" className={isActive('/crops') ? 'active' : ''} onClick={() => setMenuOpen(false)}>Crops</Link>
-              <Link to="/shop" className={isActive('/shop') ? 'active' : ''} onClick={() => setMenuOpen(false)}>Shop</Link>
-              <Link to="/login" className="btn btn-outline btn-sm" onClick={() => setMenuOpen(false)}>Login</Link>
-              <Link to="/register" className="btn btn-primary btn-sm" onClick={() => setMenuOpen(false)}>Sign Up</Link>
+              <Link to="/crops" className={isActive('/crops') ? 'active' : ''} onClick={() => setMenuOpen(false)}>{t('common.crops')}</Link>
+              <Link to="/shop" className={isActive('/shop') ? 'active' : ''} onClick={() => setMenuOpen(false)}>{t('common.shop')}</Link>
+              
+              <div className="nav-auth-wrapper">
+                <div className="lang-selector-nav">
+                  <button onClick={() => changeLanguage('en')} className={`lang-btn ${i18n.language === 'en' ? 'active' : ''}`}>EN</button>
+                  <button onClick={() => changeLanguage('gj')} className={`lang-btn ${i18n.language === 'gj' ? 'active' : ''}`}>ગુજ</button>
+                </div>
+                <div className="auth-buttons">
+                  <Link to="/login" className="btn btn-outline btn-sm" onClick={() => setMenuOpen(false)}>{t('common.login')}</Link>
+                  <Link to="/register" className="btn btn-primary btn-sm" onClick={() => setMenuOpen(false)}>{t('common.register')}</Link>
+                </div>
+              </div>
             </>
           )}
         </div>

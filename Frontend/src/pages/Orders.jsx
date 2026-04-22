@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getMyOrders, getOrderById, getMyShopkeeperOrders, deleteOrder, deleteShopkeeperOrder } from '../services/api';
+import { generateInvoice } from '../utils/generateInvoice';
 import './Orders.css';
 
 export default function Orders() {
@@ -181,6 +182,16 @@ export default function Orders() {
                         onClick={handleCancelOrder}
                       >
                         Cancel Order ❌
+                      </button>
+                    )}
+
+                    {detail.order?.order_type === 'local' && (
+                      <button
+                        className="btn btn-outline btn-sm"
+                        style={{ marginLeft: capitalize(detail.order?.status) === 'Delivered' || capitalize(detail.order?.status) === 'Cancelled' ? 'auto' : 10, padding: '4px 10px', fontSize: '0.85rem' }}
+                        onClick={() => generateInvoice(detail.order)}
+                      >
+                        Download Invoice 📄
                       </button>
                     )}
 

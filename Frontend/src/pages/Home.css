@@ -20,7 +20,10 @@
   margin-bottom: 20px;
 }
 .hero-title span { color: var(--green-bright); }
-.hero-desc { font-size: 1.05rem; color: var(--text-mid); line-height: 1.7; max-width: 440px; margin-bottom: 32px; }
+.hero-desc { font-size: 1.05rem; color: var(--text-mid); line-height: 1.7; max-width: 440px; margin-bottom: 24px; }
+
+
+
 .hero-actions { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 40px; }
 .hero-stats { display: flex; align-items: center; gap: 24px; }
 .stat { display: flex; flex-direction: column; }

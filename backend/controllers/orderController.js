@@ -112,7 +112,7 @@ const placeShopkeeperOrder = async (req, res) => {
     const farmerId = req.farmer.id;
 
     const [cartItems] = await conn.query(
-      `SELECT sc.*, sp.name, sp.price, sp.discount_price, sp.price_unit
+      `SELECT sc.*, sp.name, sp.price, sp.discount_price, sp.price_unit, sp.hsn_sac, sp.gst_rate
        FROM shopkeeper_cart sc
        JOIN shopkeeper_products sp ON sc.product_id = sp.id
        WHERE sc.farmer_id = ? AND sc.shopkeeper_id = ?`,
@@ -134,9 +134,9 @@ const placeShopkeeperOrder = async (req, res) => {
 
     for (const item of cartItems) {
       await conn.query(
-        `INSERT INTO shopkeeper_order_items (order_id, product_id, product_name, quantity, price_unit, price_at_purchase, subtotal)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [orderId, item.product_id, item.name, item.quantity, item.price_unit, item.price_snapshot, item.price_snapshot * item.quantity]
+        `INSERT INTO shopkeeper_order_items (order_id, product_id, product_name, quantity, price_unit, price_at_purchase, subtotal, hsn_sac, gst_rate)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [orderId, item.product_id, item.name, item.quantity, item.price_unit, item.price_snapshot, item.price_snapshot * item.quantity, item.hsn_sac, item.gst_rate]
       );
     }
 
@@ -156,9 +156,10 @@ const placeShopkeeperOrder = async (req, res) => {
 const getMyShopkeeperOrders = async (req, res) => {
   try {
     const [orders] = await db.query(
-      `SELECT so.*, s.shop_name, s.city, s.mobile as shop_mobile
+      `SELECT so.*, s.shop_name, s.city, s.mobile as shop_mobile, s.address as shop_address, s.gst_number, s.bank_name, s.bank_account_number, s.bank_ifsc, s.invoice_terms, f.name as farmer_name, f.village as farmer_village
        FROM shopkeeper_orders so
        JOIN shopkeepers s ON so.shopkeeper_id = s.id
+       JOIN farmers f ON so.farmer_id = f.id
        WHERE so.farmer_id = ?
        ORDER BY so.created_at DESC`,
       [req.farmer.id]
@@ -188,6 +189,16 @@ const deleteOrder = async (req, res) => {
     // Mark order as cancelled
     await db.query("UPDATE orders SET status = 'cancelled' WHERE id = ?", [orderId]);
     
+    // Restore stock
+    const [items] = await db.query('SELECT * FROM order_items WHERE order_id = ?', [orderId]);
+    for (const item of items) {
+      if (item.item_type === 'product' && item.product_id) {
+        await db.query('UPDATE products SET stock = stock + ? WHERE id = ?', [item.quantity, item.product_id]);
+      } else if (item.item_type === 'seed' && item.seed_stock_id) {
+        await db.query('UPDATE admin_seed_stock SET stock = stock + ? WHERE id = ?', [item.quantity, item.seed_stock_id]);
+      }
+    }
+
     // Mark payment as refunded if money was paid
     await db.query("UPDATE payments SET payment_status = 'refunded' WHERE order_id = ? AND payment_status != 'failed'", [orderId]);
 
@@ -204,11 +215,20 @@ const deleteShopkeeperOrder = async (req, res) => {
     const farmerId = req.farmer.id;
     const [orders] = await db.query('SELECT order_status FROM shopkeeper_orders WHERE id = ? AND farmer_id = ?', [orderId, farmerId]);
     if (orders.length === 0) return res.status(404).json({ success: false, message: 'Order not found.' });
-    if (orders[0].order_status === 'delivered') return res.status(400).json({ success: false, message: 'Cannot cancel an order that has already been delivered.' });
-    if (orders[0].order_status === 'cancelled') return res.status(400).json({ success: false, message: 'Order is already cancelled.' });
+    const oldStatus = orders[0].order_status;
+    if (oldStatus === 'delivered') return res.status(400).json({ success: false, message: 'Cannot cancel an order that has already been delivered.' });
+    if (oldStatus === 'cancelled') return res.status(400).json({ success: false, message: 'Order is already cancelled.' });
 
     // Mark order as cancelled
     await db.query("UPDATE shopkeeper_orders SET order_status = 'cancelled' WHERE id = ?", [orderId]);
+
+    // Restore stock if it was deducted
+    if (['confirmed', 'shipped'].includes(oldStatus)) {
+      const [items] = await db.query('SELECT product_id, quantity FROM shopkeeper_order_items WHERE order_id = ?', [orderId]);
+      for (const item of items) {
+        await db.query('UPDATE shopkeeper_products SET stock = stock + ? WHERE id = ?', [item.quantity, item.product_id]);
+      }
+    }
     
     // Mark payment as refunded if money was paid
     await db.query("UPDATE shopkeeper_payments SET payment_status = 'refunded' WHERE order_id = ? AND payment_status != 'failed'", [orderId]);

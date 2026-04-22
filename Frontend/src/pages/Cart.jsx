@@ -37,6 +37,18 @@ export default function Cart() {
     } catch (err) { showMsg(err.response?.data?.message || 'Failed to remove item.'); }
   };
 
+  const handleItemClick = (item, isShop) => {
+    if (isShop) {
+      navigate(`/shop/shopkeeper-products/${item.product_id}`);
+    } else {
+      if (item.product_id) {
+        navigate(`/shop/products/${item.product_id}`);
+      } else if (item.seed_stock_id && item.crop_id) {
+        navigate(`/crops/${item.crop_id}`);
+      }
+    }
+  };
+
   const handlePaymentForOrder = async (orderId, shopkeeper = false) => {
     if (!paymentMethod) return;
 
@@ -157,7 +169,7 @@ export default function Cart() {
                           : <span>{item.item_type === 'seed' ? '🌱' : '📦'}</span>
                         }
                       </div>
-                      <div className="cart-item-info">
+                      <div className="cart-item-info" onClick={() => handleItemClick(item, false)} style={{ cursor: 'pointer' }}>
                         <strong>{item.product_name || item.seed_name || 'Item'}</strong>
                         {item.crop_name && <span className="badge badge-green" style={{ marginLeft: 8 }}>{item.crop_name}</span>}
                         <div className="cart-item-price">₹{item.price_snapshot} / {item.price_unit || 'unit'}</div>
@@ -186,7 +198,7 @@ export default function Cart() {
                           : <span>📦</span>
                         }
                       </div>
-                      <div className="cart-item-info">
+                      <div className="cart-item-info" onClick={() => handleItemClick(item, true)} style={{ cursor: 'pointer' }}>
                         <strong>{item.product_name || 'Item'}</strong>
                         {item.shop_name && <div style={{ fontSize: '0.8rem', color: 'var(--text-light)' }}>🏪 {item.shop_name} · {item.city}</div>}
                         <div className="cart-item-price">₹{item.price_snapshot} / unit</div>
