@@ -11,8 +11,15 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
+const profilePicStorage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, 'uploads/'),
+  filename: (req, file, cb) => cb(null, `shopkeeper_${Date.now()}${path.extname(file.originalname)}`)
+});
+const uploadProfilePic = multer({ storage: profilePicStorage });
+
 // Shopkeeper routes (shopkeeper auth)
 router.get('/profile', protectShopkeeper, ctrl.getProfile);
+router.put('/profile-picture', protectShopkeeper, uploadProfilePic.single('image'), ctrl.updateProfilePicture);
 router.put('/update-upi', protectShopkeeper, ctrl.updateUpi);
 router.put('/invoice-settings', protectShopkeeper, ctrl.updateInvoiceSettings);
 router.post('/products', protectShopkeeper, upload.single('image'), ctrl.addProduct);

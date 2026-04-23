@@ -185,10 +185,10 @@ export default function Orders() {
                       </button>
                     )}
 
-                    {detail.order?.order_type === 'local' && (
+                    {detail.order?.order_type === 'local' && capitalize(detail.order?.status) === 'Delivered' && (
                       <button
                         className="btn btn-outline btn-sm"
-                        style={{ marginLeft: capitalize(detail.order?.status) === 'Delivered' || capitalize(detail.order?.status) === 'Cancelled' ? 'auto' : 10, padding: '4px 10px', fontSize: '0.85rem' }}
+                        style={{ marginLeft: 'auto', padding: '4px 10px', fontSize: '0.85rem' }}
                         onClick={() => generateInvoice(detail.order)}
                       >
                         Download Invoice 📄

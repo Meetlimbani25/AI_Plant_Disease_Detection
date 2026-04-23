@@ -42,6 +42,9 @@ export const getShopkeeperIncomingOrders = (params) => API.get('/shopkeeper/orde
 export const updateShopkeeperOrderStatus = (id, status) => API.put(`/shopkeeper/orders/${id}/status`, { status });
 export const updateShopkeeperUpi = (data) => API.put('/shopkeeper/update-upi', data);
 export const updateShopkeeperInvoiceSettings = (data) => API.put('/shopkeeper/invoice-settings', data);
+export const updateShopkeeperProfilePicture = (formData) => API.put('/shopkeeper/profile-picture', formData, {
+  headers: { 'Content-Type': 'multipart/form-data' },
+});
 
 // Cart
 export const getCart = () => API.get('/cart');

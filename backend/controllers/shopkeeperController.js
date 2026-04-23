@@ -4,10 +4,24 @@ const db = require('../config/db');
 const getProfile = async (req, res) => {
   try {
     const [rows] = await db.query(
-      'SELECT id, name, shop_name, mobile, email, address, city, district, pincode, gst_number, shop_image, is_approved, upi_id, upi_name, bank_name, bank_account_number, bank_ifsc, invoice_terms, created_at FROM shopkeepers WHERE id = ?',
+      'SELECT id, name, shop_name, mobile, email, address, city, district, pincode, gst_number, shop_image, is_approved, upi_id, upi_name, bank_name, bank_account_number, bank_ifsc, invoice_terms, created_at, profile_picture FROM shopkeepers WHERE id = ?',
       [req.shopkeeper.id]
     );
     res.json({ success: true, shopkeeper: rows[0] });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// UPDATE profile picture
+const updateProfilePicture = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: 'No image provided.' });
+    }
+    const imageUrl = `/uploads/${req.file.filename}`;
+    await db.query('UPDATE shopkeepers SET profile_picture = ? WHERE id = ?', [imageUrl, req.shopkeeper.id]);
+    res.json({ success: true, message: 'Profile picture updated successfully!', profile_picture: imageUrl });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -289,4 +303,4 @@ const processRefund = async (req, res) => {
 
 
 
-module.exports = { getProfile, addProduct, getMyProducts, updateProduct, deleteProduct, getOrders, updateOrderStatus, getPayments, getReviews, addReview, updateUpi, updateInvoiceSettings, getCancelledOrders, processRefund };
+module.exports = { getProfile, updateProfilePicture, addProduct, getMyProducts, updateProduct, deleteProduct, getOrders, updateOrderStatus, getPayments, getReviews, addReview, updateUpi, updateInvoiceSettings, getCancelledOrders, processRefund };

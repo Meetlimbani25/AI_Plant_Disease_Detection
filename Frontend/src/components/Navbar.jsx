@@ -54,7 +54,11 @@ export default function Navbar() {
                 </div>
                 <div className="navbar-user">
                   <Link to="/profile" className="user-avatar" onClick={() => setMenuOpen(false)}>
-                    {user.name?.charAt(0).toUpperCase()}
+                    {user.profile_picture ? (
+                      <img src={`http://localhost:5000${user.profile_picture}`} alt="Profile" />
+                    ) : (
+                      user.name?.charAt(0).toUpperCase()
+                    )}
                   </Link>
                   <button onClick={handleLogout} className="btn btn-outline btn-sm">{t('common.logout')}</button>
                 </div>

@@ -165,7 +165,7 @@ const shopkeeperLogin = async (req, res) => {
       success: true,
       message: 'Login successful!',
       token,
-      shopkeeper: { id: shopkeeper.id, name: shopkeeper.name, shop_name: shopkeeper.shop_name, mobile: shopkeeper.mobile, city: shopkeeper.city }
+      shopkeeper: { id: shopkeeper.id, name: shopkeeper.name, shop_name: shopkeeper.shop_name, mobile: shopkeeper.mobile, city: shopkeeper.city, profile_picture: shopkeeper.profile_picture }
     });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });

@@ -5,7 +5,7 @@ import { generateInvoice } from '../utils/generateInvoice';
 import './Shopkeeper.css';
 
 export default function Shopkeeper() {
-  const { user } = useAuth();
+  const { user, setUser } = useAuth();
   const [activeTab, setActiveTab] = useState('products');
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
@@ -25,6 +25,7 @@ export default function Shopkeeper() {
     discount_price: '',
   });
   const [editingProductId, setEditingProductId] = useState(null);
+  const [expandedOrderId, setExpandedOrderId] = useState(null);
 
   // UPI Form
   const [upiForm, setUpiForm] = useState({ upi_id: '', upi_name: '' });
@@ -33,6 +34,25 @@ export default function Shopkeeper() {
   // Invoice Form
   const [invoiceForm, setInvoiceForm] = useState({ bank_name: '', bank_account_number: '', bank_ifsc: '', invoice_terms: '', gst_number: '' });
   const [invoiceMsg, setInvoiceMsg] = useState({ type: '', text: '' });
+
+  const handleProfilePictureUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('image', file);
+
+    try {
+      const { updateShopkeeperProfilePicture } = require('../services/api');
+      const res = await updateShopkeeperProfilePicture(formData);
+      const updatedUser = { ...user, profile_picture: res.data.profile_picture };
+      setUser(updatedUser);
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      alert('Profile picture updated successfully!');
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to update profile picture');
+    }
+  };
 
   useEffect(() => {
     fetchProducts();
@@ -227,7 +247,19 @@ export default function Shopkeeper() {
 
         <div className="shopkeeper-layout">
           <div className="shop-info-card">
-            <div className="shop-icon">🏪</div>
+            <div style={{ position: 'relative', width: '80px', height: '80px', margin: '0 auto 15px' }}>
+              <div className="shop-icon" style={{ position: 'relative', width: '100%', height: '100%', margin: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#e9ecef', borderRadius: '50%', fontSize: '40px', overflow: 'hidden' }}>
+                {user?.profile_picture ? (
+                  <img src={`http://localhost:5000${user.profile_picture}`} alt="Profile" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  '🏪'
+                )}
+              </div>
+              <label htmlFor="profile-upload" style={{ position: 'absolute', bottom: '0', right: '0', cursor: 'pointer', background: '#3498db', color: '#fff', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', boxShadow: '0 2px 5px rgba(0,0,0,0.2)' }} title="Update Profile Picture">
+                📷
+              </label>
+              <input type="file" id="profile-upload" style={{ display: 'none' }} accept="image/*" onChange={handleProfilePictureUpload} />
+            </div>
             <h3>{user?.shop_name || 'My Shop'}</h3>
             <p>{user?.name}</p>
             <div className="shop-meta">
@@ -265,7 +297,7 @@ export default function Shopkeeper() {
           </div>
 
           <div className="shop-main">
-            <div className="tabs" style={{ display: 'flex', gap: '15px', marginBottom: '20px', borderBottom: '1px solid #ccc', paddingBottom: '10px' }}>
+            <div className="tabs" style={{ display: 'flex', flexWrap: 'wrap', gap: '15px', marginBottom: '20px', borderBottom: '1px solid #ccc', paddingBottom: '10px' }}>
               <button
                 className={`btn ${activeTab === 'products' ? 'btn-primary' : 'btn-outline'}`}
                 onClick={() => setActiveTab('products')}
@@ -448,74 +480,130 @@ export default function Shopkeeper() {
                 </div>
               </>
             ) : activeTab === 'orders' ? (
-              <div className="shopkeeper-product-list">
-                <h3>Incoming Orders ({orders.length})</h3>
+              <div className="shopkeeper-orders-container">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                   <h2>E-Commerce Orders Management</h2>
+                   <button className="btn btn-success" onClick={fetchOrders} style={{ display: 'flex', alignItems: 'center', gap: '5px', backgroundColor: '#28a745', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer' }}>
+                      <span style={{ fontSize: '1.2em' }}>↻</span> Refresh
+                   </button>
+                </div>
                 {loadingOrders ? (
                   <p>Loading orders...</p>
                 ) : orders.length === 0 ? (
                   <p>No incoming orders yet.</p>
                 ) : (
-                  <div className="product-cards" style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                    {orders.map((o) => (
-                      <div key={o.id} className="product-card" style={{ padding: '20px' }}>
-                        <div className="product-head" style={{ borderBottom: '1px solid #333', paddingBottom: '10px', marginBottom: '10px' }}>
-                          <div>
-                            <strong style={{ fontSize: '1.2rem' }}>Order #{o.id}</strong>
-                            <p style={{ color: 'var(--text-light)', marginTop: '4px' }}>{new Date(o.created_at).toLocaleString()}</p>
-                          </div>
-                          <div style={{ textAlign: 'right' }}>
-                            <span className={`badge ${o.order_status === 'delivered' ? 'badge-green' : 'badge-gold'}`}>
-                              {o.order_status?.toUpperCase() || 'PENDING'}
-                            </span>
-                            <h3 style={{ marginTop: '8px' }}>₹{o.total_amount}</h3>
-                          </div>
-                        </div>
-
-                        <div style={{ marginBottom: '15px' }}>
-                          <strong>Customer Details:</strong>
-                          <p>👤 {o.farmer_name} | 📱 {o.farmer_mobile}</p>
-                          <p>📍 Delivery Address: {o.delivery_address || o.village}</p>
-                          {o.note && <p style={{ color: 'var(--text-light)', fontStyle: 'italic' }}>Note: "{o.note}"</p>}
-                        </div>
-
-                        <div style={{ marginBottom: '15px', backgroundColor: '#f9f9f9', padding: '10px', borderRadius: '5px' }}>
-                          <strong>Products Ordered:</strong>
-                          <ul style={{ listStyleType: 'none', paddingLeft: 0, marginTop: '8px' }}>
-                            {o.items && o.items.map((item, idx) => (
-                              <li key={idx} style={{ marginBottom: '6px', display: 'flex', justifyContent: 'space-between', borderBottom: idx < o.items.length - 1 ? '1px dashed #ddd' : 'none', paddingBottom: '4px' }}>
-                                <span>
-                                  {item.quantity} {item.price_unit} x <strong>{item.product_name}</strong>
-                                  <span style={{ color: 'var(--text-light)', fontSize: '0.85em', marginLeft: '8px' }}>(₹{item.price_at_purchase}/{item.price_unit})</span>
-                                </span>
-                                <span>₹{item.subtotal}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-
-                        <div className="action-group" style={{ borderTop: '1px solid #333', paddingTop: '15px' }}>
-                          <select
-                            className="btn btn-outline btn-sm"
-                            style={{ padding: '6px' }}
-                            value={o.order_status || 'pending'}
-                            onChange={(e) => handleUpdateOrderStatus(o.id, e.target.value)}
-                          >
-                            <option value="pending">Pending</option>
-                            <option value="confirmed">Confirmed</option>
-                            <option value="shipped">Shipped</option>
-                            <option value="delivered">Delivered</option>
-                            <option value="cancelled">Cancelled</option>
-                          </select>
-                          <button
-                            className="btn btn-outline btn-sm"
-                            style={{ marginLeft: '10px', padding: '6px 12px' }}
-                            onClick={() => generateInvoice(o)}
-                          >
-                            Download Invoice 📄
-                          </button>
-                        </div>
-                      </div>
-                    ))}
+                  <div className="table-responsive" style={{ backgroundColor: '#fff', borderRadius: '8px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', overflowX: 'auto' }}>
+                    <table className="table" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '800px' }}>
+                      <thead style={{ backgroundColor: '#f8f9fa', borderBottom: '2px solid #eaeaea' }}>
+                        <tr>
+                          <th style={{ padding: '15px', fontWeight: 'bold', color: '#333' }}>Order ID</th>
+                          <th style={{ padding: '15px', fontWeight: 'bold', color: '#333' }}>Customer</th>
+                          <th style={{ padding: '15px', fontWeight: 'bold', color: '#333' }}>Amount</th>
+                          <th style={{ padding: '15px', fontWeight: 'bold', color: '#333' }}>Date</th>
+                          <th style={{ padding: '15px', fontWeight: 'bold', color: '#333' }}>Status</th>
+                          <th style={{ padding: '15px', fontWeight: 'bold', color: '#333' }}>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {orders.map((o) => (
+                          <React.Fragment key={o.id}>
+                            <tr style={{ borderBottom: '1px solid #eaeaea', backgroundColor: '#fff' }}>
+                              <td style={{ padding: '15px', color: '#555' }}>#{o.id}</td>
+                              <td style={{ padding: '15px' }}>
+                                <div style={{ fontWeight: 'bold', color: '#333' }}>{o.farmer_name}</div>
+                                <div style={{ fontSize: '0.85em', color: '#777' }}>{o.farmer_mobile}</div>
+                              </td>
+                              <td style={{ padding: '15px', fontWeight: 'bold', color: '#28a745' }}>
+                                ₹{Number(o.total_amount).toFixed(2)}
+                              </td>
+                              <td style={{ padding: '15px', color: '#555' }}>
+                                {new Date(o.created_at).toLocaleDateString()}
+                              </td>
+                              <td style={{ padding: '15px' }}>
+                                <select
+                                  style={{
+                                    padding: '5px 10px',
+                                    borderRadius: '4px',
+                                    border: '1px solid #ccc',
+                                    backgroundColor: o.order_status === 'delivered' ? '#d4edda' : (o.order_status === 'processing' ? '#cce5ff' : '#fff3cd'),
+                                    color: '#333',
+                                    outline: 'none',
+                                    cursor: 'pointer'
+                                  }}
+                                  value={o.order_status || 'pending'}
+                                  onChange={(e) => handleUpdateOrderStatus(o.id, e.target.value)}
+                                >
+                                  <option value="pending">Pending</option>
+                                  <option value="processing">Processing</option>
+                                  <option value="confirmed">Confirmed</option>
+                                  <option value="shipped">Shipped</option>
+                                  <option value="delivered">Delivered</option>
+                                  <option value="cancelled">Cancelled</option>
+                                </select>
+                              </td>
+                              <td style={{ padding: '15px' }}>
+                                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                                  <button
+                                    className="btn btn-sm"
+                                    style={{ backgroundColor: '#3498db', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer' }}
+                                    onClick={() => setExpandedOrderId(expandedOrderId === o.id ? null : o.id)}
+                                  >
+                                    {expandedOrderId === o.id ? 'Hide Details' : 'View Details'}
+                                  </button>
+                                  {o.order_status === 'delivered' && (
+                                    <button
+                                      className="btn btn-sm"
+                                      style={{ backgroundColor: '#343a40', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}
+                                      onClick={() => generateInvoice(o)}
+                                    >
+                                      ⬇ INVOICE
+                                    </button>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                            {expandedOrderId === o.id && (
+                              <tr style={{ backgroundColor: '#fafafa', borderBottom: '1px solid #eaeaea' }}>
+                                <td colSpan="6" style={{ padding: '20px' }}>
+                                  <div style={{ display: 'flex', gap: '40px', flexWrap: 'wrap' }}>
+                                    <div style={{ flex: 1, minWidth: '250px' }}>
+                                      <h4 style={{ margin: '0 0 10px 0', borderBottom: '1px solid #ddd', paddingBottom: '5px', color: '#333' }}>Shipping Information</h4>
+                                      <p style={{ margin: '5px 0', fontSize: '0.9em' }}><strong>Email:</strong> {o.farmer_email || 'N/A'}</p>
+                                      <p style={{ margin: '5px 0', fontSize: '0.9em' }}><strong>Contact:</strong> {o.farmer_mobile}</p>
+                                      <p style={{ margin: '5px 0', fontSize: '0.9em' }}><strong>Address:</strong> {o.delivery_address || o.village || 'N/A'}</p>
+                                      {o.note && <p style={{ margin: '5px 0', fontSize: '0.9em', fontStyle: 'italic' }}><strong>Note:</strong> {o.note}</p>}
+                                    </div>
+                                    <div style={{ flex: 2, minWidth: '300px' }}>
+                                      <h4 style={{ margin: '0 0 10px 0', borderBottom: '1px solid #ddd', paddingBottom: '5px', color: '#333' }}>Order Items ({o.items ? o.items.length : 0})</h4>
+                                      <div style={{ backgroundColor: '#fff', border: '1px solid #eaeaea', borderRadius: '4px', padding: '10px' }}>
+                                        {o.items && o.items.map((item, idx) => (
+                                          <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: idx < o.items.length - 1 ? '1px solid #f0f0f0' : 'none' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                              {item.image_url ? (
+                                                <img src={item.image_url} alt={item.product_name} style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px' }} />
+                                              ) : (
+                                                <div style={{ width: '40px', height: '40px', backgroundColor: '#e9ecef', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>📦</div>
+                                              )}
+                                              <div>
+                                                <div style={{ fontWeight: 'bold', color: '#333' }}>{item.product_name}</div>
+                                                <div style={{ fontSize: '0.85em', color: '#777' }}>₹{item.price_at_purchase} x {item.quantity} {item.price_unit}</div>
+                                              </div>
+                                            </div>
+                                            <div style={{ fontWeight: 'bold', color: '#333' }}>
+                                              ₹{item.subtotal}
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </td>
+                              </tr>
+                            )}
+                          </React.Fragment>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 )}
               </div>
