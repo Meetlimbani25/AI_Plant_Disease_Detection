@@ -6,9 +6,14 @@
 const express = require('express');
 const cors    = require('cors');
 const path    = require('path');
+const { initializeDatabase } = require('./initDb');
 require('dotenv').config();
 
 const app = express();
+
+initializeDatabase().catch((err) => {
+  console.error('❌ DB bootstrap failed:', err.message);
+});
 
 // =============================================
 // MIDDLEWARE
@@ -72,9 +77,13 @@ app.use((err, req, res, next) => {
 // =============================================
 // START SERVER
 // =============================================
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log('\n========================================');
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
-  console.log('========================================\n');
-});
+if (process.env.VERCEL !== '1') {
+  const PORT = process.env.PORT || 5000;
+  app.listen(PORT, () => {
+    console.log('\n========================================');
+    console.log(`🚀 Server running on http://localhost:${PORT}`);
+    console.log('========================================\n');
+  });
+}
+
+module.exports = app;
