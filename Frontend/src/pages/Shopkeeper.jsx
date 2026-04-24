@@ -482,10 +482,10 @@ export default function Shopkeeper() {
             ) : activeTab === 'orders' ? (
               <div className="shopkeeper-orders-container">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                   <h2>E-Commerce Orders Management</h2>
-                   <button className="btn btn-success" onClick={fetchOrders} style={{ display: 'flex', alignItems: 'center', gap: '5px', backgroundColor: '#28a745', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer' }}>
-                      <span style={{ fontSize: '1.2em' }}>↻</span> Refresh
-                   </button>
+                  <h2>E-Commerce Orders Management</h2>
+                  <button className="btn btn-success" onClick={fetchOrders} style={{ display: 'flex', alignItems: 'center', gap: '5px', backgroundColor: '#28a745', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer' }}>
+                    <span style={{ fontSize: '1.2em' }}>↻</span> Refresh
+                  </button>
                 </div>
                 {loadingOrders ? (
                   <p>Loading orders...</p>

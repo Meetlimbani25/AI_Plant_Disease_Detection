@@ -30,3 +30,6 @@ ml-model/dataset/
 __pycache__/
 *.pyc
 .env
+backend/.env.example
+Frontend/.env.example
+Frontend/.env.example

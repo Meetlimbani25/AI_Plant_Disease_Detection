@@ -3,19 +3,20 @@ import { detectDisease, getDiseaseHistory } from '../services/api';
 import './Disease.css';
 
 export default function Disease() {
-  const [file, setFile]         = useState(null);
-  const [preview, setPreview]   = useState(null);
-  const [result, setResult]     = useState(null);
-  const [history, setHistory]   = useState([]);
-  const [loading, setLoading]   = useState(false);
+  const [file, setFile] = useState(null);
+  const [preview, setPreview] = useState(null);
+  const [result, setResult] = useState(null);
+  const [history, setHistory] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [histLoading, setHistLoading] = useState(true);
-  const [error, setError]       = useState('');
+  const [error, setError] = useState('');
   const fileRef = useRef();
+  const cameraRef = useRef();
 
   useEffect(() => {
     getDiseaseHistory()
       .then(r => setHistory(r.data.history || []))
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setHistLoading(false));
   }, []);
 
@@ -71,7 +72,6 @@ export default function Disease() {
               className={`upload-zone ${preview ? 'has-preview' : ''}`}
               onDrop={handleDrop}
               onDragOver={e => e.preventDefault()}
-              onClick={() => !preview && fileRef.current.click()}
             >
               {preview ? (
                 <div className="preview-wrap">
@@ -81,12 +81,20 @@ export default function Disease() {
               ) : (
                 <div className="upload-placeholder">
                   <div className="upload-icon">📷</div>
-                  <h3>Drop or click to upload</h3>
-                  <p>Support: JPG, PNG, WebP · Max 10MB</p>
-                  <button className="btn btn-outline" onClick={() => fileRef.current.click()}>Browse Files</button>
+                  <h3>Select Image Source</h3>
+                  <p>Take a new photo or upload from your gallery</p>
+                  <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', marginTop: '16px', flexWrap: 'wrap' }}>
+                    <button className="btn btn-primary" onClick={() => cameraRef.current.click()}>
+                      📸 Take Photo
+                    </button>
+                    <button className="btn btn-outline" onClick={() => fileRef.current.click()}>
+                      📁 Upload Gallery
+                    </button>
+                  </div>
                 </div>
               )}
               <input ref={fileRef} type="file" accept="image/*" hidden onChange={e => e.target.files[0] && handleFile(e.target.files[0])} />
+              <input ref={cameraRef} type="file" accept="image/*" capture="environment" hidden onChange={e => e.target.files[0] && handleFile(e.target.files[0])} />
             </div>
 
             {error && <div className="alert alert-error" style={{ marginTop: 16 }}>{error}</div>}

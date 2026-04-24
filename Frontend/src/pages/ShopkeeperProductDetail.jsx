@@ -108,14 +108,14 @@ export default function ShopkeeperProductDetail() {
               <form onSubmit={handleSubmitReview}>
                 <div className="rating-input">
                   <label>Rating:</label>
-                  <select value={newReview.rating} onChange={e => setNewReview({...newReview, rating: parseInt(e.target.value)})}>
-                    {[5,4,3,2,1].map(r => <option key={r} value={r}>{'⭐'.repeat(r)} ({r})</option>)}
+                  <select value={newReview.rating} onChange={e => setNewReview({ ...newReview, rating: parseInt(e.target.value) })}>
+                    {[5, 4, 3, 2, 1].map(r => <option key={r} value={r}>{'⭐'.repeat(r)} ({r})</option>)}
                   </select>
                 </div>
                 <textarea
                   placeholder="Share your experience with this product..."
                   value={newReview.review_text}
-                  onChange={e => setNewReview({...newReview, review_text: e.target.value})}
+                  onChange={e => setNewReview({ ...newReview, review_text: e.target.value })}
                   required
                 />
                 <button type="submit" className="btn-secondary" disabled={reviewLoading}>

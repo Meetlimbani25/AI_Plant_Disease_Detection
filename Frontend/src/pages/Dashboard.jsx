@@ -6,8 +6,8 @@ import './Dashboard.css';
 
 export default function Dashboard() {
   const { user, role } = useAuth();
-  const [orders, setOrders]   = useState([]);
-  const [scans, setScans]     = useState([]);
+  const [orders, setOrders] = useState([]);
+  const [scans, setScans] = useState([]);
   const [cartCount, setCartCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
@@ -26,12 +26,12 @@ export default function Dashboard() {
   }, [role]);
 
   const quickLinks = [
-    { to: '/crops',   icon: '🌾', label: 'Browse Crops',    color: '#e8f5e8' },
-    { to: '/disease', icon: '🔬', label: 'Scan Disease',    color: '#e0f2fe' },
-    { to: '/shop',    icon: '🛒', label: 'Shop Inputs',     color: '#fef3c7' },
-    { to: '/orders',  icon: '📦', label: 'My Orders',       color: '#fce7f3' },
-    { to: '/cart',    icon: '🛍️', label: `Cart (${cartCount})`, color: '#f3e8ff' },
-    { to: '/profile', icon: '👤', label: 'My Profile',      color: '#d1fae5' },
+    { to: '/crops', icon: '🌾', label: 'Browse Crops', color: '#e8f5e8' },
+    { to: '/disease', icon: '🔬', label: 'Scan Disease', color: '#e0f2fe' },
+    { to: '/shop', icon: '🛒', label: 'Shop Inputs', color: '#fef3c7' },
+    { to: '/orders', icon: '📦', label: 'My Orders', color: '#fce7f3' },
+    { to: '/cart', icon: '🛍️', label: `Cart (${cartCount})`, color: '#f3e8ff' },
+    { to: '/profile', icon: '👤', label: 'My Profile', color: '#d1fae5' },
   ];
 
   if (loading) return <div className="loading-center"><div className="spinner" /></div>;
@@ -100,7 +100,7 @@ export default function Dashboard() {
                   <Link to="/disease" className="see-all">View All →</Link>
                 </div>
                 <div className="recent-scans">
-                  {scans.slice(0,3).map(s => (
+                  {scans.slice(0, 3).map(s => (
                     <div key={s.id} className="scan-card">
                       {s.image_url && (
                         <img src={`http://localhost:5000${s.image_url}`} alt="scan" className="scan-thumb" />
@@ -126,7 +126,7 @@ export default function Dashboard() {
                   <Link to="/orders" className="see-all">View All →</Link>
                 </div>
                 <div className="orders-mini">
-                  {orders.slice(0,3).map(o => (
+                  {orders.slice(0, 3).map(o => (
                     <div key={o.id} className="order-mini-card">
                       <div>
                         <strong>Order #{o.id}</strong>

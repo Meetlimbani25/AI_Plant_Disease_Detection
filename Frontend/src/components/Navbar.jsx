@@ -46,7 +46,7 @@ export default function Navbar() {
               {role === 'admin' && (
                 <Link to="/admin" className={isActive('/admin') ? 'active' : ''} onClick={() => setMenuOpen(false)}>{t('common.adminPanel')}</Link>
               )}
-              
+
               <div className="nav-auth-wrapper">
                 <div className="lang-selector-nav">
                   <button onClick={() => changeLanguage('en')} className={`lang-btn ${i18n.language === 'en' ? 'active' : ''}`}>EN</button>
@@ -68,7 +68,7 @@ export default function Navbar() {
             <>
               <Link to="/crops" className={isActive('/crops') ? 'active' : ''} onClick={() => setMenuOpen(false)}>{t('common.crops')}</Link>
               <Link to="/shop" className={isActive('/shop') ? 'active' : ''} onClick={() => setMenuOpen(false)}>{t('common.shop')}</Link>
-              
+
               <div className="nav-auth-wrapper">
                 <div className="lang-selector-nav">
                   <button onClick={() => changeLanguage('en')} className={`lang-btn ${i18n.language === 'en' ? 'active' : ''}`}>EN</button>

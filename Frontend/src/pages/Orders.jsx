@@ -126,13 +126,15 @@ export default function Orders() {
             <p>Your placed orders will appear here.</p>
           </div>
         ) : (
-          <div className="orders-layout">
-            <div className="orders-list">
-              {orders.map(o => (
+          <div className="orders-list">
+            {orders.map(o => {
+              const isSelected = selected === (o.id + o.order_type);
+              return (
                 <div
                   key={o.id + o.order_type}
-                  className={`order-card ${selected === (o.id + o.order_type) ? 'selected' : ''}`}
-                  onClick={() => viewDetail(o)}
+                  className={`order-card ${isSelected ? 'selected' : ''}`}
+                  onClick={() => isSelected ? setSelected(null) : viewDetail(o)}
+                  style={{ display: 'flex', flexDirection: 'column' }}
                 >
                   <div className="order-card-top">
                     <div>
@@ -155,80 +157,100 @@ export default function Orders() {
                     <span>🧺 {o.item_count} item{o.item_count !== 1 ? 's' : ''}</span>
                     <span>{new Date(o.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
                   </div>
-                </div>
-              ))}
-            </div>
 
-            <div className="order-detail-panel">
-              {!selected && (
-                <div className="empty-state" style={{ padding: '60px 20px' }}>
-                  <div className="empty-emoji" style={{ fontSize: '2.5rem' }}>👆</div>
-                  <p>Select an order to view details</p>
-                </div>
-              )}
-              {selected && detailLoading && (
-                <div className="loading-center" style={{ minHeight: 200 }}><div className="spinner" /></div>
-              )}
-              {selected && !detailLoading && detail && (
-                <div className="order-detail">
-                  <div className="order-detail-header" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
-                    <h3 style={{ margin: 0 }}>{getOrderTitle(detail.order)}</h3>
-                    <span className={`badge ${statusColor(detail.order?.status)}`}>{capitalize(detail.order?.status)}</span>
+                  {isSelected && (
+                    <div className="order-inline-detail page-enter" onClick={e => e.stopPropagation()} style={{ marginTop: '20px', borderTop: '1px solid var(--border)', paddingTop: '20px', cursor: 'default' }}>
+                      {detailLoading ? (
+                        <div className="loading-center" style={{ minHeight: 100 }}><div className="spinner" /></div>
+                      ) : (detail && (
+                        <div className="order-detail">
+                          <div className="order-detail-header" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '20px' }}>
+                            <h3 style={{ margin: 0 }}>{getOrderTitle(detail.order)}</h3>
+                            <span className={`badge ${statusColor(detail.order?.status)}`}>{capitalize(detail.order?.status)}</span>
 
-                    {capitalize(detail.order?.status) !== 'Delivered' && capitalize(detail.order?.status) !== 'Cancelled' && (
-                      <button
-                        className="btn btn-outline btn-sm"
-                        style={{ marginLeft: 'auto', borderColor: '#e74c3c', color: '#e74c3c', padding: '4px 10px', fontSize: '0.85rem' }}
-                        onClick={handleCancelOrder}
-                      >
-                        Cancel Order ❌
-                      </button>
-                    )}
+                            {capitalize(detail.order?.status) !== 'Delivered' && capitalize(detail.order?.status) !== 'Cancelled' && (
+                              <button
+                                className="btn btn-outline btn-sm"
+                                style={{ marginLeft: 'auto', borderColor: '#e74c3c', color: '#e74c3c', padding: '4px 10px', fontSize: '0.85rem' }}
+                                onClick={handleCancelOrder}
+                              >
+                                Cancel Order ❌
+                              </button>
+                            )}
 
-                    {detail.order?.order_type === 'local' && capitalize(detail.order?.status) === 'Delivered' && (
-                      <button
-                        className="btn btn-outline btn-sm"
-                        style={{ marginLeft: 'auto', padding: '4px 10px', fontSize: '0.85rem' }}
-                        onClick={() => generateInvoice(detail.order)}
-                      >
-                        Download Invoice 📄
-                      </button>
-                    )}
+                            {detail.order?.order_type === 'local' && capitalize(detail.order?.status) === 'Delivered' && (
+                              <button
+                                className="btn btn-outline btn-sm"
+                                style={{ marginLeft: 'auto', padding: '4px 10px', fontSize: '0.85rem' }}
+                                onClick={() => generateInvoice(detail.order)}
+                              >
+                                Download Invoice 📄
+                              </button>
+                            )}
 
-                    {detail.order?.order_type === 'local' && capitalize(detail.order?.status) !== 'Cancelled' && (!detail.order?.payment_status || detail.order?.payment_status === 'pending' || detail.order?.payment_status === 'cod_pending') && (
-                      <button
-                        className="btn btn-primary btn-sm"
-                        style={{ marginLeft: 10, padding: '4px 10px', fontSize: '0.85rem' }}
-                        onClick={() => navigate(`/shopkeeper-payment/${detail.order.id}`)}
-                      >
-                        Pay via QR 📱
-                      </button>
-                    )}
-                  </div>
-                  <div className="order-detail-meta" style={{ marginTop: '15px' }}>
-                    <div><span>🏷️ Order ID</span><strong>#{detail.order?.id}</strong></div>
-                    <div><span>📅 Date</span><strong>{new Date(detail.order?.created_at).toLocaleDateString('en-IN')}</strong></div>
-                    <div><span>💰 Total</span><strong>₹{Number(detail.order?.total_amount).toFixed(2)}</strong></div>
-                    {detail.order?.address && <div style={{ gridColumn: '1/-1' }}><span>📍 Address</span><strong>{detail.order.address}</strong></div>}
-                    {detail.order?.delivery_address && <div style={{ gridColumn: '1/-1' }}><span>📍 Address</span><strong>{detail.order.delivery_address}</strong></div>}
-                    {detail.order?.shop_name && <div style={{ gridColumn: '1/-1', display: 'flex', gap: '8px' }}><span className="badge badge-gold">Local Order</span><strong>{detail.order.shop_name} ({detail.order.shop_mobile})</strong></div>}
-                  </div>
+                            {detail.order?.order_type === 'local' && capitalize(detail.order?.status) !== 'Cancelled' && (!detail.order?.payment_status || detail.order?.payment_status === 'pending' || detail.order?.payment_status === 'cod_pending') && (
+                              <button
+                                className="btn btn-primary btn-sm"
+                                style={{ marginLeft: 10, padding: '4px 10px', fontSize: '0.85rem' }}
+                                onClick={() => navigate(`/shopkeeper-payment/${detail.order.id}`)}
+                              >
+                                Pay via QR 📱
+                              </button>
+                            )}
+                          </div>
+                          
+                          <div className="order-detail-meta" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', background: 'var(--off-white)', borderRadius: 'var(--radius-md)', padding: '20px', marginBottom: '20px' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                              <span style={{ fontSize: '0.78rem', color: 'var(--text-light)' }}>🏷️ Order ID</span>
+                              <strong style={{ fontSize: '0.9rem', color: 'var(--text-dark)' }}>#{detail.order?.id}</strong>
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                              <span style={{ fontSize: '0.78rem', color: 'var(--text-light)' }}>📅 Date</span>
+                              <strong style={{ fontSize: '0.9rem', color: 'var(--text-dark)' }}>{new Date(detail.order?.created_at).toLocaleDateString('en-IN')}</strong>
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                              <span style={{ fontSize: '0.78rem', color: 'var(--text-light)' }}>💰 Total</span>
+                              <strong style={{ fontSize: '0.9rem', color: 'var(--text-dark)' }}>₹{Number(detail.order?.total_amount).toFixed(2)}</strong>
+                            </div>
+                            {detail.order?.address && <div style={{ gridColumn: '1/-1', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                              <span style={{ fontSize: '0.78rem', color: 'var(--text-light)' }}>📍 Address</span>
+                              <strong style={{ fontSize: '0.9rem', color: 'var(--text-dark)' }}>{detail.order.address}</strong>
+                            </div>}
+                            {detail.order?.delivery_address && <div style={{ gridColumn: '1/-1', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                              <span style={{ fontSize: '0.78rem', color: 'var(--text-light)' }}>📍 Delivery</span>
+                              <strong style={{ fontSize: '0.9rem', color: 'var(--text-dark)' }}>{detail.order.delivery_address}</strong>
+                            </div>}
+                            {detail.order?.shop_name && <div style={{ gridColumn: '1/-1', display: 'flex', gap: '8px' }}>
+                              <span className="badge badge-gold">Local Order</span>
+                              <strong style={{ fontSize: '0.9rem', color: 'var(--text-dark)' }}>{detail.order.shop_name} ({detail.order.shop_mobile})</strong>
+                            </div>}
+                          </div>
 
-                  <h4 style={{ margin: '20px 0 12px', color: 'var(--green-deep)' }}>Items</h4>
-                  {(detail.items || []).map(item => (
-                    <div key={item.id} className="order-item">
-                      <div>
-                        <strong>{item.item_name}</strong>
-                        <span className="badge badge-green" style={{ marginLeft: 8 }}>{item.item_type}</span>
-                      </div>
-                      <div style={{ fontSize: '0.85rem', color: 'var(--text-light)' }}>
-                        {item.quantity} × ₹{item.price_at_purchase} = <strong>₹{(item.quantity * item.price_at_purchase).toFixed(2)}</strong>
-                      </div>
+                          <h4 style={{ margin: '20px 0 12px', color: 'var(--green-deep)' }}>Items</h4>
+                          {(detail.items || []).map(item => (
+                            <div key={item.id} className="order-item" style={{ display: 'flex', flexDirection: 'column', gap: '4px', padding: '12px 0', borderBottom: '1px solid var(--border)' }}>
+                              <div>
+                                <strong style={{ fontSize: '0.9rem', color: 'var(--text-dark)' }}>{item.item_name}</strong>
+                                <span className="badge badge-green" style={{ marginLeft: 8 }}>{item.item_type}</span>
+                              </div>
+                              <div style={{ fontSize: '0.85rem', color: 'var(--text-light)' }}>
+                                {item.quantity} × ₹{item.price_at_purchase} = <strong>₹{(item.quantity * item.price_at_purchase).toFixed(2)}</strong>
+                              </div>
+                            </div>
+                          ))}
+                          
+                          <div style={{ textAlign: 'center', marginTop: '20px' }}>
+                             <button className="btn btn-outline btn-sm" onClick={(e) => { e.stopPropagation(); setSelected(null); }}>
+                               Close Details ⬆️
+                             </button>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  )}
                 </div>
-              )}
-            </div>
+              );
+            })}
           </div>
         )}
       </div>
